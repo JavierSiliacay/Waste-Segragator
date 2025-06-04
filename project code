@@ -1,0 +1,83 @@
+/*
+  ------------------------------------------------------------------------------
+  © 2025 Javier Siliacay | USTP Autotronics - All Rights Reserved.
+
+  This source code is the intellectual property of the author and is provided 
+  for educational and non-commercial use only. Unauthorized copying, modification, 
+  distribution, or use of this code for commercial purposes is strictly prohibited 
+  without prior written consent from the author.
+
+  Violation of these terms may result in legal action under applicable intellectual 
+  property laws.
+
+  For permissions, contact: github.com/javiersiliacay
+  ------------------------------------------------------------------------------
+*/
+
+#include <AccelStepper.h>
+#include <Servo.h>
+
+Servo servo;
+
+#define motorInterfaceType 4  // 4-wire motor control
+#define rainsensor A0
+#define irsensor A1
+
+// IN1=8, IN3=9, IN2=10, IN4=11 (this pin order is required by AccelStepper)
+AccelStepper stepper(motorInterfaceType, 8, 10, 9, 11);  // DO NOT CHANGE THIS ORDER
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("AccelStepper Test Start");
+
+   servo.attach(7);
+    pinMode(rainsensor, INPUT);
+  pinMode(irsensor, INPUT);
+
+  stepper.setMaxSpeed(500);     // Steps per second
+  stepper.setAcceleration(100); // Steps per second squared
+}
+
+void loop() {
+  int rainValue = analogRead(rainsensor);
+  int irValue = analogRead(irsensor);
+
+  Serial.print("IR Sensor: ");
+  Serial.print(irValue);
+  Serial.print(" | Rain Sensor: ");
+  Serial.println(rainValue);
+
+  bool objectDetected = irValue < 500;    // adjust if needed
+  bool isWet = rainValue < 500;           // adjust if needed
+
+  static int lastCondition = -1; // to prevent repeated moves
+
+
+  // Rotate one full revolution CW
+   if (objectDetected && isWet && lastCondition != 1) {
+    servo.write(180);
+  Serial.println("Condition 1: Wet object detected - Rotate CW");
+  stepper.moveTo(stepper.currentPosition() + 2038 / 6);  // 1 full revolution
+  while (stepper.distanceToGo() != 0) {
+    stepper.run();
+  }
+   }
+
+  // Rotate one full revolution CCW
+   else if (objectDetected && !isWet && lastCondition != 2) {
+    servo.write(180);
+   Serial.println("Condition 2: Dry object detected - Rotate CCW");
+  stepper.moveTo(stepper.currentPosition() - 2038 / 7);
+  while (stepper.distanceToGo() != 0) {
+    stepper.run();
+  }
+   }
+
+else {
+  servo.write(90);
+    Serial.println("No object - Returning to origin");
+    stepper.moveTo(0);
+    lastCondition = 0;
+  }
+  stepper.run();
+}

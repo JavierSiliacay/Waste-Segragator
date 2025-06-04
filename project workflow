@@ -1,0 +1,23 @@
+Project Workflow: Wet Object Detection & Sorting
+
+Start the main loop.
+
+Read the IR sensor to detect if an object is present.
+
+If no object is detected:
+  - Rotate the stepper motor back to the home position.
+  - Center the servo motor (set to neutral).
+  - Wait and repeat the loop.
+
+If an object is detected:
+  - Read the rain sensor to check if the object is wet.
+  - If the object is wet:
+    - Rotate the stepper motor clockwise.
+    - Move the servo motor to the open position.
+  - If the object is dry:
+    - Rotate the stepper motor counterclockwise.
+    - Move the servo motor to the open position.
+
+Wait until the stepper motor finishes the rotation.
+
+Repeat from step 1.
